@@ -36,10 +36,13 @@ librarian::shelf(
   foreach,
   parallel,
   gamlr,
-  glmnet
+  glmnet,
+  rpart,
+  rpart.plot,
+  rsample
 )
 
-here::i_am("R/include.R")
+here::i_am("code/build.Rmd")
 ```
 
 ## What Causes What?
@@ -59,7 +62,7 @@ here::i_am("R/include.R")
 ### 3.) Why did they have to control for Metro ridership? What was that trying to capture?
 ```
 ```
-  While gathering this data, the researchers navigated around a potential flaw in their research design.  They called into question the effect of alert levels on general activity within the city.  If threat-levels are high, were less people going to go about their day as they normally would? If so, this could explain lower crime rates, deterring the researchers from establishing a causal effect between "Police" and "Crime."  The researchers decided to measure the usage of the city's METRO during varying alert levels.  They saw that, even when including ridership in their model, police presence was still associated with a significant negative affect on crime rates.  Ultimately, the researchers argued there was a theoretically sound reason to measure METRO ridership and control for it in their model.
+  While gathering this data, the researchers navigated around a potential flaw in their research design.  They called into question the effect of alert levels on general activity within the city.  If threat-levels are high, were less people going to go about their day as they normally would? If so, this could explain lower crime rates, deterring the researchers from establishing a causal effect between "Police" and "Crime."  The researchers decided to measure the usage of the city's METRO during varying alert levels.  They saw that, even when including ridership in their model, police presence was still associated with a significant negative affect on crime rates.  Moreover, ridership was generally unaffected by the alert levels.  Ultimately, the researchers argued there was a theoretically sound reason to measure METRO ridership and controlled for it in their model.
 
 
 ### 4.) Below I am showing you "Table 4" from the researchers' paper. Just focus on the first column of the table. Can you describe the model being estimated here? What is the conclusion?
@@ -69,5 +72,71 @@ here::i_am("R/include.R")
 
 ## Tree Modeling: Dengue Cases
 
-  
+
+In this analysis, we will look at which model preforms best when predicting dengue cases.  The models of interest are CART, random forest, and gradient-boosted trees.  In this order, we will calculate each of their out-of-sample performance then take the best model to make some partial dependence plots. Let's get going!
+
+```{r include = FALSE}
+#Reading and separating the data
+
+dengue = read.csv(here("data/dengue.csv"))
+
+dengue_split = initial_split(dengue, prop = .8)
+
+dengue_train = training(dengue_split)
+
+dengue_test = testing(dengue_split)
+
+```
+### Building our models:
+
+#### CART
+
+We will build this model using R's rpart() function, regressing total_cases against all other variables.  Initially, we will build a very complex tree, using a high complexity parameter for our splits.  We will then prune our tree to find the optimal complexity parameter. 
+```
+```
+Below shows a plot of our cross validated error for increasing levels of our complexity parameter.  We can see that it bottoms out very quickly, so a model with the parameter that minimizes this error will still be quite simple.  This is opposed to choosing the simplest model within one standard error of the minimum. Doing this would likely lead to a model that was too simple, leading our model to not split at all.  In this case, it seems we can afford to choose the parameter that minimizes cross-validated error.
+
+```{r =FALSE, error=FALSE, message=FALSE, warning=FALSE}
+# building the model:
+
+dengue_CART = rpart(total_cases ~ ., data = dengue_train, control = rpart.control(cp = .00001))
+
+plotcp(dengue_CART)
+```
+
+```{r}
+prune_1se = function(my_tree) {
+  out = as.data.frame(my_tree$cptable)
+  thresh = min(out$xerror)
+  cp_opt = out$CP[out$xerror == thresh]
+  prune(my_tree, cp=cp_opt)
+}
+
+dengue_CART = prune_1se(dengue_CART)
+```
+```
+```
+Our tree model, depending on training and testing splits, will typically, at the very least, split on the variable min_air_temp_k:
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+# Plotting tree for fun
+rpart.plot(dengue_CART, type = 4, digits = 2, tweak = 2, fallen.leaves = TRUE, extra = 1)
+
+```
+
+
+#### Random Forests
+
+
+
+
+
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+### RMSE for CART
+
+rmse(dengue_CART, dengue_test)
+
+```
+
+###
+
 ## Predictive Model Building: Green Certification
