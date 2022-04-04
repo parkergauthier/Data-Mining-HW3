@@ -52,11 +52,20 @@ here::i_am("R/include.R")
   
   
 ### 2.) How were the researchers from UPenn able to isolate this effect? Briefly describe their approach and discuss their result in the “Table 2” below, from the researchers' paper.
-
+```
+```
+  Researchers from UPenn used an interesting method to extrapolate the true effect of police presence on crime rate in Washington D.C.  Fairly unique to our nation's capital is the utilization of terror alert levels, which are designed to establish a greater police presence in the city to thwart varying threats of terrorism. The researchers took advantage of this unique situation to find the causal effect of "Police" on "Crime." In one regression, they observed that, on "High-Alert" days, higher police presence was associated with lower crime rates. In another, the researchers controlled for METRO ridership, and also noted a negative relationship between "Police" and "Crime." These regressions showed a clear 'before and after' effect on the variables of interest.
 
 ### 3.) Why did they have to control for Metro ridership? What was that trying to capture?
+```
+```
+  While gathering this data, the researchers navigated around a potential flaw in their research design.  They called into question the effect of alert levels on general activity within the city.  If threat-levels are high, were less people going to go about their day as they normally would? If so, this could explain lower crime rates, deterring the researchers from establishing a causal effect between "Police" and "Crime."  The researchers decided to measure the usage of the city's METRO during varying alert levels.  They saw that, even when including ridership in their model, police presence was still associated with a significant negative affect on crime rates.  Ultimately, the researchers argued there was a theoretically sound reason to measure METRO ridership and control for it in their model.
+
 
 ### 4.) Below I am showing you "Table 4" from the researchers' paper. Just focus on the first column of the table. Can you describe the model being estimated here? What is the conclusion?
+```
+```
+
 
 ## Tree Modeling: Dengue Cases
 
