@@ -1,0 +1,64 @@
+---
+title: "Data-Mining-HW3"
+author: "Parker Gauthier"
+date: "4/4/2022"
+output: md_document
+---
+
+
+```{r include=FALSE}
+if (!("librarian" %in% rownames(utils::installed.packages()))) {
+  utils::install.packages("librarian")
+}
+
+librarian::shelf( 
+  cran_repo = "https://cran.microsoft.com/",
+  ask = FALSE,
+  stats, 
+  here,
+  kableExtra,
+  ggthemes,
+  tidyverse,
+  lubridate,
+  haven,
+  lmtest,
+  gganimate,
+  gapminder,
+  stargazer,
+  snakecase,
+  mosaic,
+  dplyr,
+  esquisse,
+  plotly,
+  modelr,
+  rsample,
+  caret,
+  foreach,
+  parallel,
+  gamlr,
+  glmnet
+)
+
+here::i_am("R/include.R")
+```
+
+## What Causes What?
+
+### 1.) Why can’t I just get data from a few different cities and run the regression of “Crime” on “Police” to understand how more cops in the streets affect crime? (“Crime” refers to some measure of crime rate and “Police” measures the number of cops in a city.)
+
+```
+```
+  In a vast majority of situations, establishing causation is not as simple as running a regression on two variables and calling it a day.  Although there may be a significant relationship between a variable of interest and a particular covariate, it is common that there is much more explaining the change in a target variable's value.  In the case of regressing "Police" against "Crime", a particular city's crime rate could be affected by many other factors such as population density or public education spending.  When adding covariates such as these to a regression, we could see that variations in crime are less explained by policing and more so by other factors.  With this in mind, researchers have developed methods to extract causality from their models, helping us see the true effect of "Police" on "Crime."
+  
+  
+### 2.) How were the researchers from UPenn able to isolate this effect? Briefly describe their approach and discuss their result in the “Table 2” below, from the researchers' paper.
+
+
+### 3.) Why did they have to control for Metro ridership? What was that trying to capture?
+
+### 4.) Below I am showing you "Table 4" from the researchers' paper. Just focus on the first column of the table. Can you describe the model being estimated here? What is the conclusion?
+
+## Tree Modeling: Dengue Cases
+
+  
+## Predictive Model Building: Green Certification
