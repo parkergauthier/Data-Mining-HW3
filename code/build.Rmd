@@ -327,6 +327,36 @@ rmse(green_boost, green_test)
 
 ### Particial Dependence Plots
 
+``````{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+varImpPlot(green_RF, type = 1)
+```
+
+*size*
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+pdp::partial(green_RF, pred.var = 'size') %>%
+  ggplot()+
+  geom_line(aes(x = size, y = yhat)) +
+  labs(title = "Partial Dependence on 'size'") +
+  theme_classic()
+```
+
+*age*
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+pdp::partial(green_RF, pred.var = 'age') %>%
+  ggplot()+
+  geom_line(aes(x = age, y = yhat)) +
+  labs(title = "Partial Dependence on 'age'") +
+  theme_classic()
+```
+
+*cert*
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+pdp::partial(green_RF, pred.var = 'cert') %>%
+  ggplot()+
+  geom_line(aes(x = cert, y = yhat)) +
+  labs(title = "Partial Dependence on 'cert'") +
+  theme_classic()
+```
 
 
 ## Predictive Model Building: California housing
