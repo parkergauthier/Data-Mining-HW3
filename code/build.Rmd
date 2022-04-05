@@ -40,7 +40,9 @@ librarian::shelf(
   rpart,
   rpart.plot,
   rsample,
-  randomForest
+  randomForest,
+  gbm,
+  pdp
 )
 
 here::i_am("code/build.Rmd")
@@ -80,6 +82,9 @@ In this analysis, we will look at which model preforms best when predicting deng
 #Reading and separating the data
 
 dengue = read.csv(here("data/dengue.csv"))
+
+dengue$city = factor(dengue$city)
+dengue$season = factor(dengue$season)
 
 dengue_split = initial_split(dengue, prop = .8)
 
@@ -135,13 +140,13 @@ Next on our list is our Random Forests model.  Like the CART model, we will run 
 ```
 Important to note, due to the nature of random forests, particularly in the repeated random sampling of the data set, cross-validation is not required as it was for the CART model.
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
-
-dengue_RANDO = randomForest(total_cases~ ., data = dengue_train, importance = TRUE, na.action = na.omit)
+#building the model
+dengue_RANDO = randomForest(total_cases~ ., data = dengue_train, importance = TRUE, na.action = na.roughfix)
 
 ```
 Below shows our variable importance from running this model:
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
-
+#variable importance plot
 varImpPlot(dengue_RANDO, type = 1)
 
 ```
@@ -151,20 +156,102 @@ Unsurprisingly, min_air_temp_k and season are among the most import variables in
 
 #### Gradient Boosted Trees
 
-Finally we will build a model using Gradient Boosted Trees.  
+Finally we will build a model using Gradient Boosted Trees.  To build the best model we can, we will first plot the cross validated error to find the optimal iteration of trees to use. 
 
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+#building the model
 
-rmse(dengue_RANDO, dengue_test)
+boost = gbm(total_cases~., data = dengue_train, interaction.depth = 4, n.trees=500, shrinkage = .05, cv.folds = 10, distribution = "gaussian")
+
+gbm.perf(boost)
 
 ```
+```
+```
+Above, the green line represents our cross validated error.  We will optimize our model according to the iteration that minimizes this.
+
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+optimal_iter = function(boostie) {
+  df = data.frame(iteration = c(1:boostie$n.trees), cv_error = boostie$cv.error)
+  min = min(df$cv_error)
+  optimal = df$iteration[df$cv_error == min]
+  boostie = gbm(total_cases~., data = dengue_train, interaction.depth = 4, n.trees= optimal, shrinkage = .05, cv.folds = 10, distribution = "gaussian")
+}
+
+boost = optimal_iter(boost)
+```
+
+#### RMSEs
+
+Alright, the moment we've been waiting for.  We have built our models, now let's see our out-of-sample performance for each.
+
+*CART:*
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 # RMSE for CART
 
 rmse(dengue_CART, dengue_test)
 
 ```
+*Random Forests:*
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 
-###
+rmse(dengue_RANDO, dengue_test)
+
+```
+*Gradient Boosted Trees:*
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+
+rmse(boost, dengue_test)
+
+```
+
+We can clearly see that our Random Forests model outperforms the other two. Now that we have our best-performing model, we can create the requested partial dependency plots:
+
+*specific_humidity:*
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+
+pdp::partial(dengue_RANDO, pred.var = 'specific_humidity') %>%
+  ggplot()+
+  geom_line(aes(x = specific_humidity, y = yhat)) +
+  labs(title = "Partial Dependence on 'specific_humidity'") +
+  theme_classic()
+
+```
+*precipitation_amt:*
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+
+pdp::partial(dengue_RANDO, pred.var = 'precipitation_amt') %>%
+  ggplot()+
+  geom_line(aes(x = precipitation_amt, y = yhat)) +
+  labs(title = "Partial Dependence on 'precipitation_amt'") +
+  theme_classic()
+
+```
+*min_air_temp_k:*
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+
+pdp::partial(dengue_RANDO, pred.var = 'min_air_temp_k') %>%
+  ggplot()+
+  geom_line(aes(x = min_air_temp_k, y = yhat)) +
+  labs(title = "Partial Dependence on 'min_air_temp_k'") +
+  theme_classic()
+
+```
+
+```
+```
+We can see from our plots that as these variables increase, so does their impact on the predicted number of cases.  This is likely because increases in these factors are known to be associated with more hospitable conditions for mosquitoes. With increases in these variables, we are likely to see more mosquito proliferation, leading to more incidences of dengue fever.
 
 ## Predictive Model Building: Green Certification
+```{r include = FALSE}
+green = read.csv(here("data/greenbuildings.csv"))
+```
+
+
+## Predictive Model Building: California housing
+
+```{r include = FALSE}
+CAhousing = read.csv(here("data/CAhousing.csv"))
+```
+
+
