@@ -39,7 +39,8 @@ librarian::shelf(
   glmnet,
   rpart,
   rpart.plot,
-  rsample
+  rsample,
+  randomForest
 )
 
 here::i_am("code/build.Rmd")
@@ -94,12 +95,12 @@ dengue_test = testing(dengue_split)
 We will build this model using R's rpart() function, regressing total_cases against all other variables.  Initially, we will build a very complex tree, using a high complexity parameter for our splits.  We will then prune our tree to find the optimal complexity parameter. 
 ```
 ```
-Below shows a plot of our cross validated error for increasing levels of our complexity parameter.  We can see that it bottoms out very quickly, so a model with the parameter that minimizes this error will still be quite simple.  This is opposed to choosing the simplest model within one standard error of the minimum. Doing this would likely lead to a model that was too simple, leading our model to not split at all.  In this case, it seems we can afford to choose the parameter that minimizes cross-validated error.
+Below shows a plot of our cross validated error for increasing levels of our complexity parameter.  We can see that it bottoms out very quickly, so a model with the parameter that minimizes this error will still be quite simple.  This is opposed to choosing the simplest model within one standard error of the minimum, which we would do if our error was minimized with a very complex model. In this case, doing this would likely lead to a model that was too simple, leading our model to not split at all.  Here, it seems we can afford to choose the parameter that minimizes cross-validated error.
 
 ```{r =FALSE, error=FALSE, message=FALSE, warning=FALSE}
 # building the model:
 
-dengue_CART = rpart(total_cases ~ ., data = dengue_train, control = rpart.control(cp = .00001))
+dengue_CART = rpart(total_cases ~ ., data = dengue_train, control = rpart.control(cp = .000001))
 
 plotcp(dengue_CART)
 ```
@@ -119,19 +120,46 @@ dengue_CART = prune_1se(dengue_CART)
 Our tree model, depending on training and testing splits, will typically, at the very least, split on the variable min_air_temp_k:
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 # Plotting tree for fun
-rpart.plot(dengue_CART, type = 4, digits = 2, tweak = 2, fallen.leaves = TRUE, extra = 1)
+rpart.plot(dengue_CART, type = 4, digits = 4, tweak = 1.1, fallen.leaves = TRUE, extra = 1)
 
 ```
+```
+```
 
+Now that we have our model using CART, let us move on to the next!
 
 #### Random Forests
 
+Next on our list is our Random Forests model.  Like the CART model, we will run total_cases against all covariates in the model.  We will omit NA values from our data set for ease of use.
+```
+```
+Important to note, due to the nature of random forests, particularly in the repeated random sampling of the data set, cross-validation is not required as it was for the CART model.
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 
+dengue_RANDO = randomForest(total_cases~ ., data = dengue_train, importance = TRUE, na.action = na.omit)
 
+```
+Below shows our variable importance from running this model:
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 
+varImpPlot(dengue_RANDO, type = 1)
+
+```
+```
+```
+Unsurprisingly, min_air_temp_k and season are among the most import variables in this model, consistent with our CART model.
+
+#### Gradient Boosted Trees
+
+Finally we will build a model using Gradient Boosted Trees.  
 
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
-### RMSE for CART
+
+rmse(dengue_RANDO, dengue_test)
+
+```
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+# RMSE for CART
 
 rmse(dengue_CART, dengue_test)
 
