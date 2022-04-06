@@ -123,7 +123,7 @@ the optimal iteration of trees to use.
 
 ![](build_files/figure-markdown_strict/unnamed-chunk-8-1.png)
 
-    ## [1] 164
+    ## [1] 197
 
 Above, the green line represents our cross validated error and the
 number displayed is the number of iterations minimizing this. We will
@@ -137,15 +137,15 @@ data we set aside earlier.
 
 *CART:*
 
-    ## [1] 43.1272
+    ## [1] 33.6515
 
 *Random Forests:*
 
-    ## [1] 24.01906
+    ## [1] 24.40189
 
 *Gradient Boosted Trees:*
 
-    ## [1] 32.16595
+    ## [1] 28.48808
 
 We can clearly see that our Random Forests model outperforms the other
 two. Now that we have our best-performing model, we can create some
@@ -186,21 +186,21 @@ This will give us a linear model with the most important features
 selected automatically. The root mean squared error is reported below as
 this models out-of-sample performance:
 
-    ## [1] 10.78265
+    ## [1] 9.897819
 
 ### Random Forests
 
 Our next model will be built using random forests. As we can see, its
 out-of-sample performance far exceeds our linear model:
 
-    ## [1] 6.697933
+    ## [1] 6.74735
 
 ### Gradient Boosted Trees
 
 Finally, we will see how an optimized gradient boosted tree model stacks
 up:
 
-    ## [1] 9.008439
+    ## [1] 9.085426
 
 We can see from the results above that our random forests model
 performed the best. We will use this model for the rest of our analysis
@@ -264,24 +264,24 @@ Forests, and Gradient Boosted Trees.
 
 ### Lasso
 
-    ## [1] 68112.35
+    ## [1] 69483.32
 
 ### Random Forests
 
-    ## [1] 49829.93
+    ## [1] 51282.15
 
 ### Gradient Boosted Trees
 
-    ## [1] 47344.05
+    ## [1] 49682.21
 
 Here, our gradient boosted trees model performs the best.
 
 #### Plotting Median House Value
 
-Using the original data and predictions from our random forest model we
-will do three projections of values onto a map of California. There will
-be a plot for actual, predicted, and residual values for median housing
-prices on this map.
+Using the original data and predictions from our gradient boosted trees
+model, we will do three projections of values onto a map of California.
+There will be a plot for actual, predicted, and residual values for
+median housing prices.
 
 ![](build_files/figure-markdown_strict/unnamed-chunk-36-1.png)
 

@@ -463,7 +463,7 @@ Here, our gradient boosted trees model performs the best.
 
 #### Plotting Median House Value
 
-Using the original data and predictions from our random forest model we will do three projections of values onto a map of California. There will be a plot for actual, predicted, and residual values for median housing prices on this map.
+Using the original data and predictions from our gradient boosted trees model, we will do three projections of values onto a map of California. There will be a plot for actual, predicted, and residual values for median housing prices.
 
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
 #retrieving data to plot over california
