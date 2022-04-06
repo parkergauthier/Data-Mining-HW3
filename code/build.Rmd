@@ -42,7 +42,9 @@ librarian::shelf(
   rsample,
   randomForest,
   gbm,
-  pdp
+  pdp,
+  ggmap,
+  devtools,
 )
 
 here::i_am("code/build.Rmd")
@@ -205,7 +207,7 @@ rmse(boost, dengue_test)
 
 ```
 
-We can clearly see that our Random Forests model outperforms the other two. Now that we have our best-performing model, we can create the requested partial dependency plots:
+We can clearly see that our Random Forests model outperforms the other two. Now that we have our best-performing model, we can create some partial dependency plots for key variables of interest:
 
 *specific_humidity:*
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
@@ -351,10 +353,10 @@ pdp::partial(green_RF, pred.var = 'age') %>%
 
 *cert*
 ```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
-pdp::partial(green_RF, pred.var = 'cert') %>%
+pdp::partial(green_RF, pred.var = 'City_Market_Rent') %>%
   ggplot()+
-  geom_line(aes(x = cert, y = yhat)) +
-  labs(title = "Partial Dependence on 'cert'") +
+  geom_line(aes(x = City_Market_Rent, y = yhat)) +
+  labs(title = "Partial Dependence on 'City_Market_Rent'") +
   theme_classic()
 ```
 
@@ -363,6 +365,127 @@ pdp::partial(green_RF, pred.var = 'cert') %>%
 
 ```{r include = FALSE}
 CAhousing = read.csv(here("data/CAhousing.csv"))
+```
+
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+# cleaning data to standardize for # of bedrooms:
+
+CAhousing =  CAhousing %>%
+  mutate(avRooms = round(totalRooms/households, digits = 3), avBedrooms = round(totalBedrooms/households, digits = 3)) %>%
+  select(-totalBedrooms, -totalRooms) %>%
+  na.roughfix()
+
+```
+
+
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+# splitting data for training and testing
+
+CAhousing_split = initial_split(CAhousing, prob = .8)
+CA_train = training(CAhousing_split)
+CA_test = testing(CAhousing_split)
+
+
+```
+
+
+### Lasso
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+
+lasso_x = model.matrix(medianHouseValue~.-1, data = CA_train)
+
+lasso_y = CA_train$medianHouseValue
+
+lasso = cv.glmnet(lasso_x, lasso_y, alpha =1)
+
+best_lambda = lasso$lambda.min
+
+lasso_x_test = model.matrix(medianHouseValue~.-1, data = CA_test)
+
+lasso_pred = predict(lasso, s = best_lambda, newx = lasso_x_test)
+
+RMSE(lasso_pred, CA_test$medianHouseValue)
+```
+### Random Forests
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+
+CA_RF = randomForest(medianHouseValue~ ., data = CA_train, importance = TRUE, na.action = na.roughfix)
+
+rmse(CA_RF, CA_test)
+```
+#Gradient Boosted Trees
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+CA_boost = gbm(medianHouseValue~., data = CA_train, interaction.depth = 4, n.trees=500, shrinkage = .05, cv.folds = 6, distribution = "gaussian")
+
+optimal_iter = function(boostie) {
+  df = data.frame(iteration = c(1:boostie$n.trees), cv_error = boostie$cv.error)
+  min = min(df$cv_error)
+  optimal = df$iteration[df$cv_error == min]
+  boostie = gbm(medianHouseValue~., data = CA_train, interaction.depth = 4, n.trees= optimal, shrinkage = .05, cv.folds = 6, distribution = "gaussian")
+}
+
+CA_boost = optimal_iter(CA_boost)
+
+rmse(CA_boost, CA_test)
+```
+
+#### Plotting Median House Value with Original Data
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+#retrieving data to plot over california
+states = map_data("state")
+cali = subset(states, region == 'california')
+```
+
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+
+cali_map_act =  ggplot(cali, aes(x = long, y = lat, group = group)) + 
+  coord_fixed(1.3) +
+  geom_polygon(color = "black", fill = "tan") +
+  theme_map() +
+  geom_point(data = CAhousing, mapping =  aes(x=longitude,y=latitude, color = medianHouseValue, group = NA, alpha = .95)) +
+  guides(alpha = FALSE) +
+  scale_color_continuous(type = "viridis") +
+  labs(title = "Median House Values - Actual", color = "Median House Valuse")
+
+cali_map_act
+```
+
+#### Plotting PREDICTED Median Housing Value
+
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+
+CAhousing = CAhousing %>%
+  mutate(medianHouseValue_pred = predict(CA_RF, CAhousing, type="response")) 
+
+cali_map_pred =  ggplot(cali, aes(x = long, y = lat, group = group)) + 
+  coord_fixed(1.3) +
+  geom_polygon(color = "black", fill = "tan") +
+  theme_map() +
+  geom_point(data = CAhousing, mapping =  aes(x=longitude,y=latitude, color = medianHouseValue_pred, group = NA, alpha = .95)) +
+  guides(alpha = FALSE) +
+  scale_color_continuous(type = "viridis") +
+  labs(title = "Median House Values - Predicted", color = "Median House Valuse")
+
+cali_map_pred
+
+```
+
+#### Plotting SQUARED RESIDUALS
+```{r echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+
+CAhousing = CAhousing %>%
+  mutate(medianHouseValue_res = (medianHouseValue - medianHouseValue_pred)^2)
+
+cali_map_res =  ggplot(cali, aes(x = long, y = lat, group = group)) + 
+  coord_fixed(1.3) +
+  geom_polygon(color = "black", fill = "tan") +
+  theme_map() +
+  geom_point(data = CAhousing, mapping =  aes(x=longitude,y=latitude, color = medianHouseValue_res, group = NA, alpha = .1)) +
+  guides(alpha = FALSE) +
+  scale_color_continuous(type = "viridis") +
+  labs(title = "Median House Values - Squared Residuals", color = "Median House Valuse")
+
+cali_map_res
 ```
 
 
